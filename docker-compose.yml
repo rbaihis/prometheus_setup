@@ -1,0 +1,74 @@
+services:
+#------------Prometheus---------------------------------------------------
+  prometheus:
+    container_name: prometheus
+    image: prom/prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - prom:/prometheus
+      #remote upload wont work if file only mounted (container can't see changes in this situation so no changes re noticed acutually unless completely restarte)
+      #- ./prom_conf/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./prom_conf:/etc/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+      - '--web.enable-lifecycle' # this for allow live remote reload  curl -X POST http://ipPromethus:port/-/reload
+      - "--storage.tsdb.retention.time=2d"
+      - "--storage.tsdb.retention.size=1GB"
+    networks:
+      - monitoring
+    restart: unless-stopped
+
+#---------AlertManager---
+  alertmanager:
+    image: prom/alertmanager:v0.26.0
+    container_name: alertmanager
+    volumes:
+      #- ./alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml
+      - ./alertmanager:/etc/alertmanager
+    command:
+      - "--config.file=/etc/alertmanager/alertmanager.yml"
+      - "--storage.path=/alertmanager"
+    ports:
+      - "9093:9093"
+    networks:
+      - monitoring
+    restart: unless-stopped
+#---------Grafana--------
+
+  grafana:
+    container_name: grafana
+    image: grafana/grafana
+    environment:
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_BASIC_ENABLED=false
+      - GF_FEATURE_TOGGLES_ENABLE=accessControlOnCall
+      - GF_INSTALL_PLUGINS=https://storage.googleapis.com/integration-artifacts/grafana-lokiexplore-app/grafana-lokiexplore-app-latest.zip;grafana-lokiexplore-app
+      - GF_DATASOURCES__DEFAULT__TYPE=prometheus
+      - GF_DATASOURCES__DEFAULT__URL=http://192.168.43.10:9090
+      - GF_DATASOURCES__DEFAULT__ACCESS=proxy
+    ports:
+      - "3000:3000"
+    depends_on:
+      prometheus:
+        condition: service_started
+    volumes:
+      - graf:/var/lib/grafana
+      - ./grafana/datasources:/etc/grafana/provisioning  # Added provisioning for datasources and dashboards
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
+
+    networks:
+      - monitoring
+    restart: unless-stopped
+
+#-------------Docker-Networks & volumes -----------------------------------
+networks:
+  monitoring:
+    driver: bridge
+volumes:
+  prom:
+  graf:

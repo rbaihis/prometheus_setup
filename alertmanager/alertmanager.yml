@@ -1,0 +1,33 @@
+global:
+  resolve_timeout: 2m
+
+route:
+  group_by: ['alertname']
+  group_wait: 30s
+  group_interval: 3m
+  repeat_interval: 2h
+  receiver: 'email-notifications'     # Default receiver (using port 587)
+
+receivers:
+  # Receiver for testing STARTTLS (port 587)
+  - name: 'email-notifications'
+    email_configs:
+      - to: 'rabbehseif@gmail.com'
+        from: 'alertmanager@example.com'
+        smarthost: 'smtp.gmail.com:587'
+        auth_username: 'rabbehseif@gmail.com'
+        auth_identity: 'rabbehseif@gmail.com'
+        auth_password: 'kvbwyiiyassfaaim'
+        require_tls: true                               # Ensure the connection is upgraded to TLS
+        tls_config:                                     # TLS/SSL configuration for STARTTLS
+          insecure_skip_verify: false                   # Ensure Gmail SSL certificate is verified
+        send_resolved: true                             # Send resolved alert notifications
+
+
+
+inhibit_rules: # avoid duplication && prioritize "critical" if (istance=instance && alertname=alertname) ==> only critical notification will be sent only
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['alertname', 'instance']
