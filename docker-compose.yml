@@ -65,6 +65,34 @@ services:
       - monitoring
     restart: unless-stopped
 
+#---------------------Logging------------------------------
+
+  fluent-bit:
+    container_name: fluent-bit
+    image: grafana/fluent-bit-plugin-loki:main
+    environment:
+      - LOKI_URL=http://loki:3100/loki/api/v1/push
+#    volumes:
+#      - ./fluent/fluent-bit.conf:/fluent-bit/etc/fluent-bit.conf
+#      - /var/lib/docker/containers/:/var/lib/docker/containers:ro
+    depends_on:
+      - loki
+    user: root
+    networks:
+      - microservices-net
+
+  loki:
+    container_name: loki
+    image: grafana/loki:main
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./loki/loki-config.yaml:/etc/loki/local-config.yaml
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - microservices-net
+
+
 #-------------Docker-Networks & volumes -----------------------------------
 networks:
   monitoring:
@@ -72,3 +100,6 @@ networks:
 volumes:
   prom:
   graf:
+  loki:
+  fluentd:
+  fluentbit:
