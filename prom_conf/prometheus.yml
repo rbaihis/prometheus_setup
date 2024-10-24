@@ -14,19 +14,49 @@ rule_files:
   - '/etc/prometheus/rules.yml'
   - '/etc/prometheus/alerts.yml'
 
-
+#Defines the endpoints (targets) Prometheus will scrape for metrics. This is the most important section as it defines how to gather data.
 scrape_configs:
+
 #-----------promethus-----------------------------
 - job_name: 'prometheus'
-  static_configs:
+  scheme: 'http' # defaul to http (can be removed)
+  static_configs: # List of static targets for Prometheus to scrape. This is the simplest form of service discovery.
   - targets: ['192.168.43.10:9090']
 
+- job_name: 'eureka'
+  scheme: 'http' # defaul to http (can be removed)
+  metrics_path: '/actuator/prometheus'
+  eureka_sd_configs: # Prometheus supports various service discovery mechanisms to dynamically discover targets. This reduces the need for static configurations.
+    - server: 'http://192.168.43.236:8761/eureka'
+  
+  #The relabel_configs section is used to transform or modify the target metadata or labels before they are scraped or ingested. You can perform actions such as renaming labels, dropping certain targets, or modifying label values.
+  relabel_configs:
+    - source_labels: [__meta_eureka_app_instance_metadata_prometheus_path] #List of labels to source values from for relabeling.
+      action: replace #The relabeling action to take (optional). Can be: [replace, keep, drop, hashmod, labeldrop, labelkeep]
+      target_label: __metrics_path__ #Name of the label to apply the relabeling result to
+      regex: (.+)
+
+    - source_labels: [__meta_eureka_app_name] #List of labels to source values from for relabeling.
+      target_label: 'job' #Name of the label to apply the relabeling result to
+      
+    - source_labels: [__meta_eureka_instance_host_name] #List of labels to source values from for relabeling.
+      target_label: 'instance' #Name of the label to apply the relabeling result to
+
+    # If no management port is available, fall back to the main service port
+    - source_labels: ['__meta_eureka_app_instance_ip_addr','__meta_eureka_app_instance_metadata_management_port']  #List of labels to source values from for relabeling.
+      regex: '(.+);(.+)'
+      target_label: '__address__'
+      replacement: '192.168.43.236:${2}'
+
+
+    
 
 # BEGIN ANSIBLE MANAGED BLOCK
 #--------------timesheet-devops-service---------------------------------
 - job_name: 'timesheet-devops-service'
+  scheme: 'http' # defaul to http (can be removed)
   metrics_path: '/timesheet-devops/actuator/prometheus'
-  static_configs:
+  static_configs: # List of static targets for Prometheus to scrape. This is the simplest form of service discovery.
   - targets:
     - '192.168.43.10:8079'
     labels:
@@ -37,8 +67,9 @@ scrape_configs:
 # BEGIN vm_monitor  BLOCK
 #--------------vm-host---------------------------------
 - job_name: 'local_vm_node_exporter'
+  scheme: 'http' # defaul to http (can be removed)
   metrics_path: '/metrics'
-  static_configs:
+  static_configs: # List of static targets for Prometheus to scrape. This is the simplest form of service discovery.
   - targets:
     - '192.168.43.10:9100'
     labels:
@@ -49,8 +80,9 @@ scrape_configs:
 # BEGIN vm_monitor  BLOCK
 #--------------Jenkins---------------------------------
 - job_name: 'jenkins'
+  scheme: 'http' # defaul to http (can be removed)
   metrics_path: '/prometheus'
-  static_configs:
+  static_configs: # List of static targets for Prometheus to scrape. This is the simplest form of service discovery.
   - targets:
     - '192.168.43.10:8080'
     labels:
