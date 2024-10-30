@@ -42,15 +42,16 @@ services:
   grafana:
     container_name: grafana
     image: grafana/grafana
+    user: root
     environment:
       - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
       - GF_AUTH_ANONYMOUS_ENABLED=true
       - GF_AUTH_BASIC_ENABLED=false
       - GF_FEATURE_TOGGLES_ENABLE=accessControlOnCall
       - GF_INSTALL_PLUGINS=https://storage.googleapis.com/integration-artifacts/grafana-lokiexplore-app/grafana-lokiexplore-app-latest.zip;grafana-lokiexplore-app
-      - GF_DATASOURCES__DEFAULT__TYPE=prometheus
-      - GF_DATASOURCES__DEFAULT__URL=http://192.168.43.10:9090
-      - GF_DATASOURCES__DEFAULT__ACCESS=proxy
+      #- GF_DATASOURCES__DEFAULT__TYPE=prometheus
+      #- GF_DATASOURCES__DEFAULT__URL=http://192.168.43.10:9090
+      #- GF_DATASOURCES__DEFAULT__ACCESS=proxy
     ports:
       - "3000:3000"
     depends_on:
@@ -58,8 +59,9 @@ services:
         condition: service_started
     volumes:
       - graf:/var/lib/grafana
-      - ./grafana/datasources:/etc/grafana/provisioning  # Added provisioning for datasources and dashboards
-      - ./grafana/dashboards:/var/lib/grafana/dashboards
+      - ./grafana/datasources:/etc/grafana/provisioning/datasources  # Added provisioning for datasources and dashboards
+      - ./grafana/dashboards:/etc/grafana/provisioning/dashboards #config-file to where files exist
+      - ./grafana/dashboards_files:/var/lib/grafana/dashboards # json dashbords exist her
 
     networks:
       - monitoring
@@ -79,7 +81,7 @@ services:
       - loki
     user: root
     networks:
-      - microservices-net
+      - monitoring
 
   loki:
     container_name: loki
@@ -90,7 +92,7 @@ services:
       - ./loki/loki-config.yaml:/etc/loki/local-config.yaml
     command: -config.file=/etc/loki/local-config.yaml
     networks:
-      - microservices-net
+      - monitoring
 
 
 #-------------Docker-Networks & volumes -----------------------------------
