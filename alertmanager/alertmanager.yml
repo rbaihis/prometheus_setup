@@ -17,7 +17,7 @@ receivers:
         smarthost: 'smtp.gmail.com:587'
         auth_username: 'rabbehseif@gmail.com'
         auth_identity: 'rabbehseif@gmail.com'
-        auth_password: 'kvbwyiiyassfaaim'
+        auth_password: 'gmail_app_secret_access'
         require_tls: true                               # Ensure the connection is upgraded to TLS
         tls_config:                                     # TLS/SSL configuration for STARTTLS
           insecure_skip_verify: false                   # Ensure Gmail SSL certificate is verified
