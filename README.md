@@ -6,7 +6,7 @@
   - update the prometheus.yml to your targets (example shows nodeExporter and others as targets)
 ### Prometheus
   - **prometheus.yml**: (/etc/prometheus/prometheus.yml)
-    - (more detail in this file)[overview_prometheusDotYaml.md]
+    - [more detail in this file](overview_prometheusDotYaml.md)
     - global config
     - static target examples
     - pointing to alert manager
